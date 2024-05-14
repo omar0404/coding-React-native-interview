@@ -1,11 +1,11 @@
 import {useCallback, useState} from 'react';
-import {useFetchMoviesQuery} from '../../services/api/movies';
+import {useGetMoviesQuery} from '../services/api/movies';
 import {FlatList, ActivityIndicator, StyleSheet} from 'react-native';
-import Movie from './movie';
+import Movie from '../components/movie';
 
 const Home = ({navigation}) => {
   const [page, setPage] = useState(1);
-  const {data, isFetching, isLoading} = useFetchMoviesQuery(page);
+  const {data, isFetching, isLoading} = useGetMoviesQuery(page);
 
   const onMoviePress = useCallback(movie => {
     navigation.navigate('MovieDetails', movie);

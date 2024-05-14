@@ -5,13 +5,21 @@ export const moviesApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: Config.TMDB_API_URL,
     headers: {
-      Authorization:
-        'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhMWVlZDM1MWIzZTM5OTlkMmFlODJiZmUwYjM0ZTBjZSIsInN1YiI6IjY2NDMwNTE4ZDNmYzFjMmY1ZmYyMDZkMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.W62W-QHhuKyCb4FkGo40PNIpmo7i6eprgzr-kEdNv-A',
+      Authorization: `Bearer ${Config.TMDB_AUTH}`,
     },
   }),
-  tagTypes: ['AccountStates'],
+  tagTypes: ['FavoriteMovies'],
   endpoints: build => ({
-    fetchMovies: build.query({
+    getConfiguration: build.query({
+      query: () => 'configuration',
+    }),
+    getMovieCountry: build.query({
+      query: movieId => `movie/${movieId}`,
+      transformResponse: data => {
+        return data.production_countries?.[0].name;
+      },
+    }),
+    getMovies: build.query({
       query: page => `discover/movie?page=${page}`,
       serializeQueryArgs: ({endpointName}) => {
         return endpointName;
@@ -23,9 +31,21 @@ export const moviesApi = createApi({
         return currentArg !== previousArg;
       },
     }),
+
+    getFavoriteMovies: build.query({
+      query: () => 'account/21268440/favorite/movies',
+      providesTags: ['FavoriteMovies'],
+    }),
     getAccountStates: build.query({
       query: movieId => `movie/${movieId}/account_states`,
-      providesTags: ['AccountStates'],
+    }),
+    getMovieTrailer: build.query({
+      query: movieId => `movie/${movieId}/videos`,
+      transformResponse: videos => {
+        return videos.results.find(
+          video => video.type === 'Trailer' && video.site === 'YouTube',
+        );
+      },
     }),
     favoriteMovie: build.mutation({
       query: body => ({
@@ -34,6 +54,8 @@ export const moviesApi = createApi({
         body,
       }),
       async onQueryStarted(body, {dispatch, queryFulfilled}) {
+        dispatch(moviesApi.util.invalidateTags(['FavoriteMovies']));
+
         const patchResult = dispatch(
           moviesApi.util.updateQueryData(
             'getAccountStates',
@@ -54,7 +76,11 @@ export const moviesApi = createApi({
 });
 
 export const {
-  useFetchMoviesQuery,
+  useGetMovieCountryQuery,
+  useGetConfigurationQuery,
+  useGetMovieTrailerQuery,
+  useGetMoviesQuery,
   useFavoriteMovieMutation,
   useGetAccountStatesQuery,
+  useGetFavoriteMoviesQuery,
 } = moviesApi;
