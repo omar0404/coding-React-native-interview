@@ -9,6 +9,7 @@ import Toast from 'react-native-toast-message';
 import {moviesApi} from './src/services/api/movies';
 function App() {
   useEffect(() => {
+    // TODO show splash screen until this is done
     store.dispatch(
       moviesApi.util.prefetch('getConfiguration', undefined, {
         force: true,

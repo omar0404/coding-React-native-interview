@@ -10,8 +10,28 @@ export const moviesApi = createApi({
   }),
   tagTypes: ['FavoriteMovies'],
   endpoints: build => ({
+    searchMovie: build.query({
+      query: ({searchValue, page}) =>
+        `search/movie?query=${searchValue}&page=${page}`,
+      serializeQueryArgs: ({endpointName}) => {
+        return endpointName;
+      },
+      merge: (currentCache, newItems) => {
+        if (newItems.page > 1) {
+          currentCache.results.push(...newItems.results);
+        } else {
+          return newItems;
+        }
+      },
+      forceRefetch({currentArg, previousArg}) {
+        return currentArg !== previousArg;
+      },
+    }),
     getConfiguration: build.query({
       query: () => 'configuration',
+    }),
+    getMovieGenres: build.query({
+      query: () => 'genre/movie/list',
     }),
     getMovieCountry: build.query({
       query: movieId => `movie/${movieId}`,
@@ -20,12 +40,17 @@ export const moviesApi = createApi({
       },
     }),
     getMovies: build.query({
-      query: page => `discover/movie?page=${page}`,
+      query: ({page, genres}) =>
+        `discover/movie?page=${page}&with_genres=${genres}`,
       serializeQueryArgs: ({endpointName}) => {
         return endpointName;
       },
       merge: (currentCache, newItems) => {
-        currentCache.results.push(...newItems.results);
+        if (newItems.page > 1) {
+          currentCache.results.push(...newItems.results);
+        } else {
+          return newItems;
+        }
       },
       forceRefetch({currentArg, previousArg}) {
         return currentArg !== previousArg;
@@ -76,6 +101,8 @@ export const moviesApi = createApi({
 });
 
 export const {
+  useGetMovieGenresQuery,
+  useSearchMovieQuery,
   useGetMovieCountryQuery,
   useGetConfigurationQuery,
   useGetMovieTrailerQuery,
